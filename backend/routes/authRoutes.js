@@ -4,16 +4,31 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 
 router.post('/comments', async (req, res) => {
-    const { user_id, content } = req.body;
+    const { username, password, content } = req.body;
     try {
-        // 댓글 등록
+        let user = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+
+        if (user.rows.length === 0) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user = await pool.query(
+                "INSERT INTO users (username, password, created_at) VALUES ($1, $2, NOW()) RETURNING *",
+                [username, hashedPassword]
+            );
+        }
+
         const newComment = await pool.query(
             "INSERT INTO comments (user_id, content, created_at, updated_at) VALUES ($1, $2, NOW(), NOW()) RETURNING *",
-            [user_id, content]
+            [user.rows[0].id, content]
         );
-        res.json(newComment.rows[0]);
+
+        const commentWithUsername = {
+            ...newComment.rows[0],
+            username: user.rows[0].username
+        };
+
+        res.json({ message: '댓글이 등록되었습니다.', data: commentWithUsername });
     } catch (err) {
-        console.error("서버 오류:", err.message);
+        console.error(err.message);
         res.status(500).json({ message: '서버 오류' });
     }
 });
@@ -44,6 +59,7 @@ router.put('/comments/:id', async (req, res) => {
     }
 });
 
+// 댓글 삭제 라우터
 router.delete('/comments/:id', async (req, res) => {
     const { password } = req.body;
     const { id } = req.params;
@@ -67,11 +83,15 @@ router.delete('/comments/:id', async (req, res) => {
     }
 });
 
-
+// 모든 댓글 조회 라우터
 router.get('/comments', async (req, res) => {
     try {
-        const allComments = await pool.query("SELECT * FROM comments");
-        res.json(allComments.rows);
+        const comments = await pool.query(
+            `SELECT comments.*, users.username 
+            FROM comments 
+            JOIN users ON comments.user_id = users.id`
+        );
+        res.json(comments.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: '서버 오류' });
