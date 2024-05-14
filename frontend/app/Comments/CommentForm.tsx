@@ -4,7 +4,9 @@ import React, { FormEvent, useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import { useCommentStore } from "../Stores/commentStore";
 
-// 댓글 타입 정의
+import '../../public/scss/commentForm.scss';
+import Image from "next/image";
+
 interface Comment {
     id: number;
     user_id: number;
@@ -104,12 +106,19 @@ export const CommentForm: React.FC = () => {
         <div>
             {message && <p>{message}</p>}
             {comments.map(comment => ( // 모든 댓글 출력
-                <div key={comment.id}>
-                    <p>User: {comment.username}</p>
-                    <p>Date: {new Date(comment.created_at).toLocaleString()}</p>
-                    <p>Content: {comment.content}</p>
-                    <button onClick={() => startEdit(comment)}>수정</button>
-                    <button onClick={() => handleDelete(comment.id)}>삭제</button>
+                <div key={comment.id} className="comment-container">
+                    <div className="comment-user-info-container">
+                        <Image src="/user-profile.jpg" alt="user" width={32} height={32} />
+                        <p>{comment.username}</p>
+                        <p>{new Date(comment.created_at).toLocaleString()}</p>
+                    </div>
+                    <p>{comment.content}</p>
+                    <button onClick={() => startEdit(comment)}>
+                        <Image src="/edit.svg" alt="edit" width={16} height={16} />
+                    </button>
+                    <button onClick={() => handleDelete(comment.id)}>
+                        <Image src="/delete.svg" alt="delete" width={16} height={16} />
+                    </button>
                     {editMode === comment.id && (
                         <form onSubmit={(e) => handleEdit(e, comment.id)}>
                             <textarea
@@ -122,23 +131,23 @@ export const CommentForm: React.FC = () => {
                     )}
                 </div>
             ))}
-            <form onSubmit={handleSubmit}>
-                <div>
+            <form onSubmit={handleSubmit} className="form-container">
+                <div className="userinfo-container">
                     <input
                         type="text"
                         placeholder="닉네임"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
+                        className="userinfo-input-container"
                     />
-                </div>
-                <div>
                     <input
                         type="password"
                         placeholder="비밀번호"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        className="userinfo-input-container"
                     />
                 </div>
                 <div>

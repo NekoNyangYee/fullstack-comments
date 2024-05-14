@@ -1,0 +1,34 @@
+.userinfo-container {
+  display: flex;
+  gap: 10px;
+}
+
+.comment-container {
+}
+
+.comment-user-info-container {
+  display: flex;
+  gap: 10px;
+
+  img {
+    border-radius: 50%;
+    border: 1px solid #d4d4d4;
+  }
+
+  p {
+    margin: auto 0;
+  }
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.userinfo-input-container {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 5px;
+}
