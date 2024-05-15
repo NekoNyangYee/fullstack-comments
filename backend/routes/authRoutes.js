@@ -43,7 +43,10 @@ router.put('/comments/:id', async (req, res) => {
         }
 
         const user = await pool.query("SELECT * FROM users WHERE id = $1", [comment.rows[0].user_id]);
+
+        // 비밀번호 비교
         const validPassword = await bcrypt.compare(password, user.rows[0].password);
+
         if (!validPassword) {
             return res.status(401).json({ message: '유효하지 않은 비밀번호입니다.' });
         }
@@ -52,12 +55,19 @@ router.put('/comments/:id', async (req, res) => {
             "UPDATE comments SET content = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
             [content, id]
         );
-        res.json(updatedComment.rows[0]);
+
+        const updatedCommentWithUsername = {
+            ...updatedComment.rows[0],
+            username: user.rows[0].username
+        };
+
+        res.json(updatedCommentWithUsername);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: '서버 오류' });
     }
 });
+
 
 // 댓글 삭제 라우터
 router.delete('/comments/:id', async (req, res) => {

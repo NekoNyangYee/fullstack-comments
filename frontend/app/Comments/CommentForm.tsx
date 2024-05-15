@@ -49,6 +49,19 @@ export const CommentForm: React.FC = () => {
         fetchComments();
     }, [setComments]);
 
+    useEffect(() => {
+        // 컴포넌트가 마운트될 때 로컬 스토리지에서 사용자 이름 가져오기
+        const storedUsername = localStorage.getItem('username');
+        if (storedUsername) {
+            setUsername(storedUsername);
+        }
+    }, []);
+
+    useEffect(() => {
+        // 사용자 이름이 변경될 때 로컬 스토리지에 저장
+        localStorage.setItem('username', username);
+    }, [username]);
+
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
@@ -89,13 +102,17 @@ export const CommentForm: React.FC = () => {
         try {
             const password: string | null = prompt('비밀번호를 입력하세요.');
             if (password) {
+                console.log(`입력된 비밀번호: ${password}`);
                 const response: AxiosResponse<Comment> = await axios.put(`http://localhost:5000/api/auth/comments/${id}`, {
                     content: editContent,
-                    password
+                    password,
+                    username
                 });
                 updateComment(response.data);
                 setEditMode(null);
                 setEditContent('');
+            } else {
+                alert('비밀번호를 다시 입력하세요.');
             }
         } catch (err: any) {
             console.error('Axios error:', err.response ? err.response.data : err.message);
@@ -108,17 +125,29 @@ export const CommentForm: React.FC = () => {
             {comments.map(comment => ( // 모든 댓글 출력
                 <div key={comment.id} className="comment-container">
                     <div className="comment-user-info-container">
-                        <Image src="/user-profile.jpg" alt="user" width={32} height={32} />
-                        <p>{comment.username}</p>
-                        <p>{new Date(comment.created_at).toLocaleString()}</p>
+                        <Image src="/user-profile.jpg" alt="user" width={38} height={38} />
+                        <div className="comment-user-container">
+                            <div className="comment-info-container">
+                                <p style={{ fontWeight: "bold", fontSize: "17px" }}>{comment.username}</p>
+                                <p style={{ color: "#868686", fontSize: "14px" }}>
+                                    {new Date(comment.updated_at).toLocaleString()}
+                                    {comment.updated_at !== comment.created_at && ' (수정됨)'}
+                                </p>
+                            </div>
+                            <div className="comment-content-container">
+                                <p>{comment.content}</p>
+                                <div className="comment-tool-button">
+                                    <button onClick={() => startEdit(comment)}>
+                                        <Image src="/edit.svg" alt="edit" width={18} height={18} />
+                                    </button>
+                                    <button onClick={() => handleDelete(comment.id)}>
+                                        <Image src="/delete.svg" alt="delete" width={18} height={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p>{comment.content}</p>
-                    <button onClick={() => startEdit(comment)}>
-                        <Image src="/edit.svg" alt="edit" width={16} height={16} />
-                    </button>
-                    <button onClick={() => handleDelete(comment.id)}>
-                        <Image src="/delete.svg" alt="delete" width={16} height={16} />
-                    </button>
+
                     {editMode === comment.id && (
                         <form onSubmit={(e) => handleEdit(e, comment.id)}>
                             <textarea
@@ -150,15 +179,17 @@ export const CommentForm: React.FC = () => {
                         className="userinfo-input-container"
                     />
                 </div>
-                <div>
+                <div className="textarea-container">
                     <textarea
-                        placeholder="내용"
+                        placeholder="댓글 작성"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         required
                     />
+                    <button type="submit">
+                        <Image src="/send.svg" alt="send" width={16} height={16} />
+                    </button>
                 </div>
-                <button type="submit">댓글 등록</button>
             </form>
         </div>
     );
