@@ -1,9 +1,8 @@
-"use client";
+'use client';
 
 import React, { FormEvent, useEffect, useState } from "react";
-import axios, { AxiosResponse } from "axios";
+import { fetchComments, addComment, updateComment, deleteComment } from '../server/ServerAction'
 import { useCommentStore } from "../Stores/commentStore";
-
 import '../../public/scss/commentForm.scss';
 import Image from "next/image";
 
@@ -16,19 +15,13 @@ interface Comment {
     updated_at: string;
 }
 
-// 서버 응답 타입 정의 (예를 들어 메시지와 댓글 데이터)
-interface ServerResponse {
-    message: string;
-    data: Comment;
-}
-
 export const CommentForm: React.FC = () => {
     const {
         username, setUsername,
         password, setPassword,
         content, setContent,
         message, setMessage,
-        comments, setComments, addComment, updateComment, deleteComment,
+        comments, setComments, addComment: addCommentToStore, updateComment: updateCommentInStore, deleteComment: deleteCommentFromStore,
         reset
     } = useCommentStore();
 
@@ -37,16 +30,16 @@ export const CommentForm: React.FC = () => {
 
     useEffect(() => {
         // 컴포넌트가 마운트될 때 모든 댓글을 가져옵니다.
-        const fetchComments = async () => {
+        const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/auth/comments');
-                setComments(response.data);
+                const data = await fetchComments();
+                setComments(data);
             } catch (err: any) {
-                console.error('Axios error:', err.response ? err.response.data : err.message);
+                console.error('Error fetching comments:', err.message);
             }
         };
 
-        fetchComments();
+        fetchData();
     }, [setComments]);
 
     useEffect(() => {
@@ -65,16 +58,12 @@ export const CommentForm: React.FC = () => {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            const response: AxiosResponse<ServerResponse> = await axios.post('http://localhost:5000/api/auth/comments', {
-                username,
-                password,
-                content
-            });
-            setMessage(response.data.message);
-            addComment(response.data.data); // 기존 댓글 유지하면서 새로운 댓글 추가
+            const data = await addComment(username, password, content);
+            setMessage(data.message);
+            addCommentToStore(data.data); // 기존 댓글 유지하면서 새로운 댓글 추가
             reset();
         } catch (err: any) {
-            console.error('Axios error:', err.response ? err.response.data : err.message);
+            console.error('Error adding comment:', err.message);
         }
     };
 
@@ -82,13 +71,13 @@ export const CommentForm: React.FC = () => {
         try {
             const password: string | null = prompt('비밀번호를 입력하세요.');
             if (password) {
-                await axios.delete(`http://localhost:5000/api/auth/comments/${id}`, { data: { password } });
-                deleteComment(id);
+                await deleteComment(id, password);
+                deleteCommentFromStore(id);
             } else {
                 alert('비밀번호를 다시 입력하세요.');
             }
         } catch (err: any) {
-            console.error('Axios error:', err.response ? err.response.data : err.message);
+            console.error('Error deleting comment:', err.message);
         }
     };
 
@@ -102,20 +91,15 @@ export const CommentForm: React.FC = () => {
         try {
             const password: string | null = prompt('비밀번호를 입력하세요.');
             if (password) {
-                console.log(`입력된 비밀번호: ${password}`);
-                const response: AxiosResponse<Comment> = await axios.put(`http://localhost:5000/api/auth/comments/${id}`, {
-                    content: editContent,
-                    password,
-                    username
-                });
-                updateComment(response.data);
+                const data = await updateComment(id, editContent, password, username);
+                updateCommentInStore(data);
                 setEditMode(null);
                 setEditContent('');
             } else {
                 alert('비밀번호를 다시 입력하세요.');
             }
         } catch (err: any) {
-            console.error('Axios error:', err.response ? err.response.data : err.message);
+            console.error('Error updating comment:', err.message);
         }
     }
 
