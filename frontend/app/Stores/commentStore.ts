@@ -1,24 +1,17 @@
-import { create } from 'zustand';
-
-interface Comment {
-    id: number;
-    user_id: number;
-    username: string;
-    content: string;
-    created_at: string;
-    updated_at: string;
-}
+// Stores/commentStore.ts
+import create from 'zustand';
+import { Comment } from '../server/ServerAction';
 
 interface CommentStore {
     username: string;
-    setUsername: (username: string) => void;
     password: string;
-    setPassword: (password: string) => void;
     content: string;
-    setContent: (content: string) => void;
     message: string;
-    setMessage: (message: string) => void;
     comments: Comment[];
+    setUsername: (username: string) => void;
+    setPassword: (password: string) => void;
+    setContent: (content: string) => void;
+    setMessage: (message: string) => void;
     setComments: (comments: Comment[]) => void;
     addComment: (comment: Comment) => void;
     updateComment: (updatedComment: Comment) => void;
@@ -28,23 +21,23 @@ interface CommentStore {
 
 export const useCommentStore = create<CommentStore>((set) => ({
     username: '',
-    setUsername: (username) => set(() => ({ username })),
     password: '',
-    setPassword: (password) => set(() => ({ password })),
     content: '',
-    setContent: (content) => set(() => ({ content })),
     message: '',
-    setMessage: (message) => set(() => ({ message })),
     comments: [],
-    setComments: (comments) => set(() => ({ comments })),
+    setUsername: (username) => set({ username }),
+    setPassword: (password) => set({ password }),
+    setContent: (content) => set({ content }),
+    setMessage: (message) => set({ message }),
+    setComments: (comments) => set({ comments }),
     addComment: (comment) => set((state) => ({ comments: [...state.comments, comment] })),
     updateComment: (updatedComment) => set((state) => ({
-        comments: state.comments.map(comment =>
+        comments: state.comments.map((comment) =>
             comment.id === updatedComment.id ? updatedComment : comment
-        )
+        ),
     })),
     deleteComment: (id) => set((state) => ({
-        comments: state.comments.filter(comment => comment.id !== id)
+        comments: state.comments.filter((comment) => comment.id !== id),
     })),
-    reset: () => set(() => ({ username: '', password: '', content: '' }))
+    reset: () => set({ username: '', password: '', content: '' }),
 }));

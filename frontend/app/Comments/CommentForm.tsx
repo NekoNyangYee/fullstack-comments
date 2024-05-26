@@ -1,21 +1,17 @@
+// components/CommentForm.tsx
 'use client';
 
 import React, { FormEvent, useEffect, useState } from "react";
-import { fetchComments, addComment, updateComment, deleteComment } from '../server/ServerAction'
+import { fetchComments, addComment, updateComment, deleteComment, Comment } from "../server/ServerAction";
 import { useCommentStore } from "../Stores/commentStore";
 import '../../public/scss/commentForm.scss';
 import Image from "next/image";
 
-interface Comment {
-    id: number;
-    user_id: number;
-    username: string;
-    content: string;
-    created_at: string;
-    updated_at: string;
+interface CommentFormProps {
+    initialComments: Comment[];
 }
 
-export const CommentForm: React.FC = () => {
+export const CommentForm: React.FC<CommentFormProps> = ({ initialComments }) => {
     const {
         username, setUsername,
         password, setPassword,
@@ -29,29 +25,17 @@ export const CommentForm: React.FC = () => {
     const [editContent, setEditContent] = useState<string>('');
 
     useEffect(() => {
-        // 컴포넌트가 마운트될 때 모든 댓글을 가져옵니다.
-        const fetchData = async () => {
-            try {
-                const data = await fetchComments();
-                setComments(data);
-            } catch (err: any) {
-                console.error('Error fetching comments:', err.message);
-            }
-        };
-
-        fetchData();
-    }, [setComments]);
+        setComments(initialComments);
+    }, [initialComments, setComments]);
 
     useEffect(() => {
-        // 컴포넌트가 마운트될 때 로컬 스토리지에서 사용자 이름 가져오기
         const storedUsername = localStorage.getItem('username');
         if (storedUsername) {
             setUsername(storedUsername);
         }
-    }, []);
+    }, [setUsername]);
 
     useEffect(() => {
-        // 사용자 이름이 변경될 때 로컬 스토리지에 저장
         localStorage.setItem('username', username);
     }, [username]);
 
@@ -60,7 +44,7 @@ export const CommentForm: React.FC = () => {
         try {
             const data = await addComment(username, password, content);
             setMessage(data.message);
-            addCommentToStore(data.data); // 기존 댓글 유지하면서 새로운 댓글 추가
+            addCommentToStore(data.data);
             reset();
         } catch (err: any) {
             console.error('Error adding comment:', err.message);
@@ -106,7 +90,7 @@ export const CommentForm: React.FC = () => {
     return (
         <div>
             {message && <p>{message}</p>}
-            {comments.map(comment => ( // 모든 댓글 출력
+            {comments.map(comment => (
                 <div key={comment.id} className="comment-container">
                     <div className="comment-user-info-container">
                         <Image src="/user-profile.jpg" alt="user" width={38} height={38} />
